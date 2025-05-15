@@ -1,19 +1,17 @@
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Windows.Forms.VisualStyles;
 
 namespace Main
 {
     class CD
     {
-        public int ToInt(string Input)
-        {
-            return (System.Convert.ToInt16(Input));
-        }
+        Helpers Helpers = new Helpers();
         public int TimeToInt(string Time)
         {
-            int Minute = ToInt(Time.Split(":")[0]);
-            int Second = ToInt(Time.Split(":")[1]);
-            int Frame = ToInt(Time.Split(":")[2]);
+            int Minute = Helpers.ToInt(Time.Split(":")[0]);
+            int Second = Helpers.ToInt(Time.Split(":")[1]);
+            int Frame = Helpers.ToInt(Time.Split(":")[2]);
             return (Minute * 60 * 75 + Second * 75 + Frame);
         }
         public string IntToTime(int Time)
@@ -33,11 +31,28 @@ namespace Main
             }
             return ($"{Minute.ToString().PadLeft(2, '0')}:{Second.ToString().PadLeft(2, '0')}:{TotalFrames.ToString().PadLeft(2, '0')}");
         }
+        public bool IsValidTimeString(string UsrInp)
+        {
+            try
+            {
+                int Test = Helpers.ToInt(UsrInp.Split(":")[0]);
+                Test = Helpers.ToInt(UsrInp.Split(":")[1]);
+                Test = Helpers.ToInt(UsrInp.Split(":")[2]);
+                return (true);
+            }
+            catch
+            {
+                Console.WriteLine($"'{UsrInp}' was not formatted correctly. (not enough numbers or missing ':')");
+                return (false);
+            }
+        }
         string PauseFrom = "00:00:00";
         string PauseTo = "00:00:00";
+        string[] ShuffledTrackPositions = null;
+        string[] ShuffledTrackLengths = null;
         [DllImport("winmm.dll", CharSet = CharSet.Auto)]
         private static extern int mciSendString(string command, StringBuilder buffer, int bufferSize, IntPtr hwndCallback);
-        StringBuilder Buffer = new StringBuilder(128);
+        //StringBuilder Buffer = new StringBuilder(128);
         public void Init()
         {
             mciSendString("open cdaudio shareable", null, 0, IntPtr.Zero);
@@ -54,14 +69,17 @@ namespace Main
         }
         public string GetDiscStatus()
         {
+            StringBuilder Buffer = new StringBuilder(128);
             mciSendString("status cdaudio mode", Buffer, Buffer.Capacity, IntPtr.Zero);
-            return(Buffer.ToString());
+            Helpers.Log(Buffer.ToString());
+            return (Buffer.ToString());
         }
         public bool IsDiscPresent()
         {
-           if (GetDiscStatus() == "open")
+           if (GetDiscStatus() == "open" || GetDiscStatus() == "" || GetDiscStatus() == null)
            {
-               return(false);
+                ShuffledTrackPositions = null;
+                return (false);
            }
            return (true);
         }
@@ -69,6 +87,7 @@ namespace Main
         {
             if (Type == "open")
             {
+                Stop("end");
                 mciSendString("set cdaudio door open", null, 0, IntPtr.Zero);
             }
             if (Type == "close")
@@ -92,9 +111,10 @@ namespace Main
         }
         public void Pause()
         {
+            StringBuilder Buffer = new StringBuilder(128);
             mciSendString("status cdaudio position", Buffer, Buffer.Capacity, IntPtr.Zero);
             PauseFrom = Buffer.ToString();
-            Stop("pause");
+            Stop(null);
         }
         public void Stop(string Type)
         {
@@ -102,35 +122,29 @@ namespace Main
             if (Type == "end")
             {
                 PauseFrom = GetTrackPositions()[0];
-            }
-            else if (Type == "empty")
-            {
-                ;
+                ShuffledTrackPositions = null;
+                ShuffledTrackLengths = null;
             }
         }
         public void Seek(string UsrInp)
         {
             try
             {
-                string From = GetTrackPositions()[ToInt(UsrInp)-1];
+                string From = GetTrackPositions()[Helpers.ToInt(UsrInp)-1];
                 Play(From, PauseTo);
             }
             catch
             {
-                try
+                if (IsValidTimeString(UsrInp))
                 {
-                    string From = $"{ToInt(UsrInp.Split(':')[0]):00}:{ToInt(UsrInp.Split(':')[1]):00}:{ToInt(UsrInp.Split(':')[2]):00}";
+                    string From = UsrInp;
                     Play(From, PauseTo);
-                }
-                catch
-                {
-                    ;
                 }
             }
         }
-        public void SeekTrack(string UsrInp)
+        public void SeekInTrack(string UsrInp)
         {
-            int Track = ToInt(GetPlayHeadPosition()[1]);
+            int Track = Helpers.ToInt(GetPlayHeadPosition()[1]);
             int FrameTrack = TimeToInt(GetTrackPositions()[Track - 1]);
             int FrameFrom = TimeToInt(UsrInp);
             int FrameFin = FrameFrom + FrameTrack;
@@ -138,8 +152,9 @@ namespace Main
         }
         public string[] GetTrackLengths()
         {
+            StringBuilder Buffer = new StringBuilder(128);
             mciSendString("status cdaudio number of tracks", Buffer, Buffer.Capacity, IntPtr.Zero);
-            int TrackCount = ToInt(Buffer.ToString());
+            int TrackCount = Helpers.ToInt(Buffer.ToString());
             List<string> TrackDuration = new List<string>();
             for (int i = 1; i <= TrackCount; i++)
             {
@@ -151,6 +166,7 @@ namespace Main
         }
         public string[] GetTrackPositions()
         {
+            StringBuilder Buffer = new StringBuilder(128);
             List<string> TrackPositions = new List<string>();
             for (int i = 1; i <= GetTrackLengths().Length; i++)
             {
@@ -171,17 +187,75 @@ namespace Main
         }
         public string[] GetPlayHeadPosition()
         {
+            StringBuilder Buffer = new StringBuilder(128);
             List<string> Return = new List<string>();
             mciSendString("status cdaudio position", Buffer, Buffer.Capacity, IntPtr.Zero);
-            Return.Add(Buffer.ToString());
+            int TotalFrames = TimeToInt(Buffer.ToString());
+            Return.Add(Buffer.ToString()); //0, current time
             int Frame = TimeToInt(Return[0]);
             mciSendString("status cdaudio current track", Buffer, Buffer.Capacity, IntPtr.Zero);
-            int Track = ToInt(Buffer.ToString());
-            Return.Add(Track.ToString());
+            int Track = Helpers.ToInt(Buffer.ToString());
+            Return.Add(Track.ToString());//1, current track
             int FrameTrack = TimeToInt(GetTrackPositions()[Track - 1]);
             int FrameFin = Frame - FrameTrack;
-            Return.Add(IntToTime(FrameFin));
+            Return.Add(IntToTime(FrameFin));//2, current time on track
+            Return.Add(TotalFrames.ToString());//3, current time in frames
             return (Return.ToArray());
+        }
+        public void ShuffleTracks()
+        {
+            Random Random = new Random();
+            List<string> ShuffledTrackPositionsTemp = new List<string>();
+            List<string> ShuffledTrackLengthsTemp = new List<string>();
+            List<string> TrackPositions = new List<string>();
+            List<string> TrackLengths = new List<string>();
+            int Index = 0;
+            foreach (string i in GetTrackPositions())
+            {
+                TrackPositions.Add(i);
+            }
+            foreach (string i in GetTrackLengths())
+            {
+                TrackLengths.Add(i);
+            }
+            for (int i = 0; i < GetTrackLengths().Length; i++)
+            {
+                Index = Random.Next(0, TrackPositions.ToArray().Length);
+                ShuffledTrackPositionsTemp.Add(TrackPositions[Index]);
+                TrackPositions.Remove(TrackPositions[Index]);
+            }
+            for (int i = 0; i < GetTrackLengths().Length; i++)
+            {
+                Index = Random.Next(0, TrackLengths.ToArray().Length);
+                ShuffledTrackLengthsTemp.Add(TrackLengths[Index]);
+                TrackLengths.Remove(TrackLengths[Index]);
+            }
+            ShuffledTrackPositions = ShuffledTrackPositionsTemp.ToArray();
+            ShuffledTrackLengths = ShuffledTrackLengthsTemp.ToArray();
+        }
+        public string[] GetShuffledTrackPositions()
+        {
+            if (ShuffledTrackPositions != null)
+            {
+                return (ShuffledTrackPositions);
+            }
+            else
+            {
+                ShuffleTracks();
+                return (ShuffledTrackPositions);
+            }
+        }
+        public string[] GetShuffledTrackLengths()
+        {
+            if (ShuffledTrackLengths != null)
+            {
+                return (ShuffledTrackLengths);
+            }
+            else
+            {
+                ShuffleTracks();
+                return (ShuffledTrackLengths);
+            }
         }
     }
 }

@@ -36,12 +36,16 @@
             Next = new Button();
             Previous = new Button();
             Seekbar = new TrackBar();
-            Download = new Button();
-            Menu = new Button();
+            TagsMenu = new Button();
             Eject = new Button();
             Quit = new Button();
             panel1 = new Panel();
-            DevBox = new Label();
+            AsyncWorker = new System.ComponentModel.BackgroundWorker();
+            OpenCloseMenu = new Button();
+            Load = new Button();
+            Shuffle = new Button();
+            TagsBox = new Label();
+            SongBox = new Label();
             ((System.ComponentModel.ISupportInitialize)Cover).BeginInit();
             ((System.ComponentModel.ISupportInitialize)Seekbar).BeginInit();
             panel1.SuspendLayout();
@@ -64,7 +68,7 @@
             Play_Pause.BackColor = Color.Transparent;
             Play_Pause.ForeColor = Color.Transparent;
             Play_Pause.Image = Properties.Resource1.Play;
-            Play_Pause.Location = new Point(12, 256);
+            Play_Pause.Location = new Point(12, 281);
             Play_Pause.Name = "Play_Pause";
             Play_Pause.Size = new Size(33, 33);
             Play_Pause.TabIndex = 2;
@@ -84,7 +88,7 @@
             // 
             Stop.BackColor = Color.Transparent;
             Stop.Image = Properties.Resource1.Stop;
-            Stop.Location = new Point(51, 256);
+            Stop.Location = new Point(51, 281);
             Stop.Name = "Stop";
             Stop.Size = new Size(33, 33);
             Stop.TabIndex = 4;
@@ -93,7 +97,7 @@
             // Next
             // 
             Next.Image = Properties.Resource1.Next;
-            Next.Location = new Point(129, 256);
+            Next.Location = new Point(129, 281);
             Next.Name = "Next";
             Next.Size = new Size(33, 33);
             Next.TabIndex = 5;
@@ -102,7 +106,7 @@
             // Previous
             // 
             Previous.Image = Properties.Resource1.Previous;
-            Previous.Location = new Point(90, 256);
+            Previous.Location = new Point(90, 281);
             Previous.Name = "Previous";
             Previous.Size = new Size(33, 33);
             Previous.TabIndex = 6;
@@ -118,28 +122,19 @@
             Seekbar.TabIndex = 7;
             Seekbar.TickStyle = TickStyle.None;
             // 
-            // Download
+            // TagsMenu
             // 
-            Download.Image = Properties.Resource1.Download;
-            Download.Location = new Point(68, 311);
-            Download.Name = "Download";
-            Download.Size = new Size(33, 33);
-            Download.TabIndex = 8;
-            Download.UseVisualStyleBackColor = true;
-            // 
-            // Menu
-            // 
-            Menu.Image = Properties.Resource1.Menu;
-            Menu.Location = new Point(178, 311);
-            Menu.Name = "Menu";
-            Menu.Size = new Size(33, 33);
-            Menu.TabIndex = 9;
-            Menu.UseVisualStyleBackColor = true;
+            TagsMenu.Image = Properties.Resource1.Menu;
+            TagsMenu.Location = new Point(207, 320);
+            TagsMenu.Name = "TagsMenu";
+            TagsMenu.Size = new Size(33, 33);
+            TagsMenu.TabIndex = 9;
+            TagsMenu.UseVisualStyleBackColor = true;
             // 
             // Eject
             // 
             Eject.Image = Properties.Resource1.Eject;
-            Eject.Location = new Point(168, 256);
+            Eject.Location = new Point(168, 320);
             Eject.Name = "Eject";
             Eject.Size = new Size(33, 33);
             Eject.TabIndex = 10;
@@ -148,7 +143,7 @@
             // Quit
             // 
             Quit.Image = Properties.Resource1.Quit;
-            Quit.Location = new Point(207, 256);
+            Quit.Location = new Point(207, 281);
             Quit.Name = "Quit";
             Quit.Size = new Size(33, 33);
             Quit.TabIndex = 11;
@@ -158,33 +153,73 @@
             // 
             panel1.BorderStyle = BorderStyle.FixedSingle;
             panel1.Controls.Add(Seekbar);
-            panel1.Location = new Point(0, 225);
+            panel1.Location = new Point(0, 250);
             panel1.Name = "panel1";
             panel1.Size = new Size(250, 25);
             panel1.TabIndex = 12;
             // 
-            // DevBox
+            // OpenCloseMenu
             // 
-            DevBox.AutoSize = true;
-            DevBox.BorderStyle = BorderStyle.FixedSingle;
-            DevBox.Location = new Point(139, 300);
-            DevBox.Name = "DevBox";
-            DevBox.Size = new Size(51, 17);
-            DevBox.TabIndex = 13;
-            DevBox.Text = "Dev Box";
+            OpenCloseMenu.Location = new Point(90, 320);
+            OpenCloseMenu.Name = "OpenCloseMenu";
+            OpenCloseMenu.Size = new Size(72, 33);
+            OpenCloseMenu.TabIndex = 13;
+            OpenCloseMenu.Text = "Close";
+            OpenCloseMenu.UseVisualStyleBackColor = true;
+            // 
+            // Load
+            // 
+            Load.Location = new Point(12, 320);
+            Load.Name = "Load";
+            Load.Size = new Size(33, 33);
+            Load.TabIndex = 14;
+            Load.Text = "LD";
+            Load.UseVisualStyleBackColor = true;
+            // 
+            // Shuffle
+            // 
+            Shuffle.Location = new Point(168, 281);
+            Shuffle.Name = "Shuffle";
+            Shuffle.Size = new Size(33, 33);
+            Shuffle.TabIndex = 15;
+            Shuffle.Text = "SFL";
+            Shuffle.UseVisualStyleBackColor = true;
+            // 
+            // TagsBox
+            // 
+            TagsBox.AutoSize = true;
+            TagsBox.BorderStyle = BorderStyle.FixedSingle;
+            TagsBox.Location = new Point(0, 17);
+            TagsBox.Name = "TagsBox";
+            TagsBox.Size = new Size(36, 17);
+            TagsBox.TabIndex = 16;
+            TagsBox.Text = "Tags!";
+            // 
+            // SongBox
+            // 
+            SongBox.AutoSize = true;
+            SongBox.BorderStyle = BorderStyle.FixedSingle;
+            SongBox.Location = new Point(0, 34);
+            SongBox.Name = "SongBox";
+            SongBox.Size = new Size(44, 17);
+            SongBox.TabIndex = 17;
+            SongBox.Text = "Songs!";
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             CausesValidation = false;
-            ClientSize = new Size(250, 330);
-            Controls.Add(DevBox);
+            ClientSize = new Size(250, 360);
+            Controls.Add(SongBox);
+            Controls.Add(TagsBox);
+            Controls.Add(Shuffle);
+            Controls.Add(Load);
+            Controls.Add(OpenCloseMenu);
             Controls.Add(panel1);
             Controls.Add(Quit);
             Controls.Add(Eject);
-            Controls.Add(Menu);
-            Controls.Add(Download);
+            Controls.Add(TagsMenu);
             Controls.Add(Previous);
             Controls.Add(Next);
             Controls.Add(Stop);
@@ -193,7 +228,8 @@
             Controls.Add(Cover);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Icon = (Icon)resources.GetObject("$this.Icon");
-            MaximumSize = new Size(266, 369);
+            MaximizeBox = false;
+            MaximumSize = new Size(266, 399);
             Name = "Form1";
             Text = "CSharp Disc Player";
             ((System.ComponentModel.ISupportInitialize)Cover).EndInit();
@@ -214,11 +250,15 @@
         private Button Next;
         private Button Previous;
         private TrackBar Seekbar;
-        private Button Download;
-        private Button Menu;
+        private Button TagsMenu;
         private Button Eject;
         private Button Quit;
         private Panel panel1;
-        private Label DevBox;
+        private System.ComponentModel.BackgroundWorker AsyncWorker;
+        private Button OpenCloseMenu;
+        private Button Load;
+        private Button Shuffle;
+        private Label TagsBox;
+        private Label SongBox;
     }
 }
